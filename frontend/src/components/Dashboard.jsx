@@ -2,7 +2,7 @@ import TokenPanel from './TokenPanel.jsx'
 import ApiTester from './ApiTester.jsx'
 import { decodeJwt } from '../lib/jwt.js'
 
-export default function Dashboard({ token, onLogout }) {
+export default function Dashboard({ token, onLogout, onTokenRefreshed }) {
   const decoded = decodeJwt(token)
   const username = decoded?.payload?.sub ?? 'unknown'
 
@@ -22,7 +22,11 @@ export default function Dashboard({ token, onLogout }) {
         </header>
 
         <TokenPanel token={token} decoded={decoded} />
-        <ApiTester token={token} onUnauthorized={onLogout} />
+        <ApiTester
+          token={token}
+          onUnauthorized={onLogout}
+          onTokenRefreshed={onTokenRefreshed}
+        />
       </section>
     </main>
   )

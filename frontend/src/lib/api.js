@@ -1,3 +1,8 @@
+const TOKEN_KEY = 'travel-agent-jwt'
+const REFRESH_KEY = 'travel-agent-jwt-refresh'
+
+export { TOKEN_KEY, REFRESH_KEY }
+
 export async function login(username, password) {
   let res
   try {
@@ -26,17 +31,54 @@ export async function login(username, password) {
   if (!data.token) {
     throw new Error('Response had no token field')
   }
+  return { token: data.token, refreshToken: data.refreshToken ?? null }
+}
+
+export async function serverLogout(token, refreshToken) {
+  await fetch('/api/auth/logout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ refreshToken }),
+  })
+}
+
+// Exchange the stored refresh token for a fresh pair (rotation: old one dies on use).
+// Returns the new access token, or null if the session is unrecoverable.
+export async function refreshAccessToken() {
+  const refreshToken = localStorage.getItem(REFRESH_KEY)
+  if (!refreshToken) return null
+
+  let res
+  try {
+    res = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    })
+  } catch {
+    return null
+  }
+  if (!res.ok) return null
+
+  const data = await res.json()
+  if (!data.token || !data.refreshToken) return null
+
+  localStorage.setItem(TOKEN_KEY, data.token)
+  localStorage.setItem(REFRESH_KEY, data.refreshToken)
   return data.token
 }
 
-export async function get(path, token) {
-  let res
-  try {
-    res = await fetch(path, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-  } catch {
-    return { status: 0, ok: false, body: 'Network error — API unreachable' }
+export async function get(path, token, { onTokenRefreshed, onUnauthorized } = {}) {
+  let res = await sendWithToken(path, token)
+
+  if (res.status === 401) {
+    const fresh = await refreshAccessToken()
+    if (fresh) {
+      onTokenRefreshed?.(fresh)
+      res = await sendWithToken(path, fresh)   // one silent retry with the new token
+    } else {
+      onUnauthorized?.()                        // refresh dead → real logout
+    }
   }
 
   const text = await res.text()
@@ -47,6 +89,16 @@ export async function get(path, token) {
     return { status: res.status, ok: res.ok, body }
   }
   return { status: res.status, ok: res.ok, body }
+}
+
+async function sendWithToken(path, token) {
+  try {
+    return await fetch(path, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  } catch {
+    return new Response('Network error — API unreachable', { status: 0 })
+  }
 }
 
 async function extractError(res, fallback) {

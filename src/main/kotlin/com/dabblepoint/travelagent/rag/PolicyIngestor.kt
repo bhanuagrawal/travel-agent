@@ -14,9 +14,9 @@ class PolicyIngestor(private val vectorStore: SimpleVectorStore) : ApplicationRu
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun run(args: ApplicationArguments) {
-        val documents = TextReader(ClassPathResource("docs/flight-policies.md")).read()
-        val chunks = TokenTextSplitter.builder().build().apply(documents)   // builder, not ctor
-        vectorStore.add(chunks)
-        log.info("Ingested {} chunks into the vector store", chunks.size)
+//        val documents = TextReader(ClassPathResource("docs/flight-policies.md")).read()
+//        val chunks = TokenTextSplitter.builder().build().apply(documents)   // builder, not ctor
+//        vectorStore.add(chunks)
+//        log.info("Ingested {} chunks into the vector store", chunks.size)
     }
 }

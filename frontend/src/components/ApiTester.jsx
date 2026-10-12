@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { get } from '../lib/api.js'
 
-export default function ApiTester({ token, onUnauthorized }) {
+export default function ApiTester({ token, onUnauthorized, onTokenRefreshed }) {
   const [path, setPath] = useState('/api/v1/health')
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -9,11 +9,11 @@ export default function ApiTester({ token, onUnauthorized }) {
   async function sendRequest() {
     setBusy(true)
     setResult(null)
-    const res = await get(path, token)
+    const res = await get(path, token, { onTokenRefreshed, onUnauthorized })
     setResult(res)
     if (res.status === 401) {
       onUnauthorized(
-        'API rejected your token (401) — logged out. Log in again to get a fresh JWT.'
+        'Session expired and the refresh token was rejected (401) — fully logged out. Log in again.'
       )
       return
     }

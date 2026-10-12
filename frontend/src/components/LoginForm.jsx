@@ -12,8 +12,8 @@ export default function LoginForm({ onLogin, notice }) {
     setBusy(true)
     setError(null)
     try {
-      const token = await login(username, password)
-      onLogin(token)
+      const tokens = await login(username, password)   // { token, refreshToken }
+      onLogin(tokens)
     } catch (err) {
       setError(err.message)
     } finally {
