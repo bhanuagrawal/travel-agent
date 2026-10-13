@@ -26,6 +26,11 @@ dependencyManagement {
 }
 
 dependencies {
+
+    implementation("io.github.resilience4j:resilience4j-spring-boot4:2.4.0")
+    implementation("org.springframework.boot:spring-boot-starter-aspectj")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+
     implementation("org.springframework.kafka:spring-kafka")
 
     implementation("org.springframework.boot:spring-boot-starter-security")

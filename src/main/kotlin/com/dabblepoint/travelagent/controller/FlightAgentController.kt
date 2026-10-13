@@ -1,8 +1,11 @@
 package com.dabblepoint.travelagent.controller
 
 import com.dabblepoint.travelagent.agent.TravelTools
+import com.dabblepoint.travelagent.analytics.AnalyticsClient
+import com.dabblepoint.travelagent.analytics.AnalyticsService
 import com.dabblepoint.travelagent.kafka.FlightEventProducer
 import com.dabblepoint.travelagent.model.AskRequest
+import com.dabblepoint.travelagent.model.FlightSearchResponse
 import com.dabblepoint.travelagent.model.TravelAdvice
 import com.dabblepoint.travelagent.service.FlightService
 import com.dabblepoint.travelagent.service.TravelOrchestratorService
@@ -27,7 +30,8 @@ class FlightAgentController(
     private val orchestrator: TravelOrchestratorService,
     private val chatClient: ChatClient,
     private val travelTools: TravelTools,
-    private val lightEventProducer: FlightEventProducer
+    private val lightEventProducer: FlightEventProducer,
+    private val analyticsService: AnalyticsService
 ) {
 
     @GetMapping("/api/v1/health")
@@ -43,10 +47,14 @@ class FlightAgentController(
         @PathVariable lat: Double,
         @PathVariable long: Double,
         authentication: Authentication
-    ): String {
+    ): FlightSearchResponse {
         val userId = authentication.name
         lightEventProducer.publishFlightSearched(userId, "DEL", "BOM")
-        return flightService.getFlightSummary(lat, long)
+
+        val summary = flightService.getFlightSummary(lat, long)
+        val trending = analyticsService.trendingRoutes()
+
+        return FlightSearchResponse(flightSummary = summary, trending = trending)
     }
 
 
