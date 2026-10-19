@@ -105,26 +105,31 @@ Live metrics: `/actuator/health`, `/actuator/circuitbreakers`, `/actuator/metric
 ## Running it locally
 
 ```bash
-# 1. Kafka + Zookeeper (from the monorepo root, where docker-compose.yaml lives)
+# 1. Kafka + Zookeeper
 docker compose up -d
-terraform apply                      # creates topic `flight-searched`, 3 partitions
-                                     # (or: kafka-topics.sh --create ...)
 
-# 2. Redis
+# 2. Create the `flight-searched` topic (3 partitions, 7-day retention)
+terraform init && terraform apply
+#    ...or by hand:
+#    kafka-topics.sh --create --topic flight-searched --partitions 3 \
+#      --replication-factor 1 --bootstrap-server localhost:9092
+
+# 3. Redis
 brew services start redis
 
-# 3. LLM + embedding model
+# 4. LLM + embedding model
 brew services start ollama
 ollama pull llama3.2:3b && ollama pull nomic-embed-text
 
-# 4. Run the agent (the secret is mandatory — the app fails fast without it)
+# 5. Run the agent (the secret is mandatory — the app fails fast without it)
 export TRAVEL_SECURITY_JWT_SECRET=$(openssl rand -base64 32)
 ./gradlew bootRun
 
-# 5. Analytics consumer (separate terminal, sibling directory)
+# 6. Analytics consumer — its own repo and terminal. Without it, the agent
+#    still answers; the trending part just comes back null.
 cd ../travel-analytics-service && ./gradlew bootRun
 
-# 6. UI (separate terminal, back in travel-agent/) → http://localhost:5173
+# 7. UI — back in travel-agent/, separate terminal → http://localhost:5173
 cd frontend && npm install && npm run dev
 ```
 
