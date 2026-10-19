@@ -52,6 +52,8 @@ The scope was deliberately bigger than one person's comfort zone. That was the p
 | Kafka | Event bus | Decouples "a user searched" from "someone wants to count it" |
 | Ollama | LLM | Free, local, private, unlimited iteration — swap to a cloud API by config |
 
+The consumer side of this pair is its own repo: **[travel-analytics-service](https://github.com/bhanuagrawal/travel-analytics-service)** — separate deploy, separate failure domain, which is the whole point of putting Kafka between them.
+
 ---
 
 ## How a request flows
@@ -125,9 +127,10 @@ ollama pull llama3.2:3b && ollama pull nomic-embed-text
 export TRAVEL_SECURITY_JWT_SECRET=$(openssl rand -base64 32)
 ./gradlew bootRun
 
-# 6. Analytics consumer — its own repo and terminal. Without it, the agent
-#    still answers; the trending part just comes back null.
-cd ../travel-analytics-service && ./gradlew bootRun
+# 6. Analytics consumer — separate repo, separate terminal
+git clone https://github.com/bhanuagrawal/travel-analytics-service.git
+cd travel-analytics-service && ./gradlew bootRun
+#    Without it the agent still answers; trending routes just come back null.
 
 # 7. UI — back in travel-agent/, separate terminal → http://localhost:5173
 cd frontend && npm install && npm run dev
