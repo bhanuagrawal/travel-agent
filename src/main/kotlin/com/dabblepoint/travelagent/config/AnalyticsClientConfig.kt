@@ -13,6 +13,7 @@ class AnalyticsClientConfig {
 
     @Bean
     fun analyticsRestClient(
+        builder: RestClient.Builder,
         @Value("\${analytics.base-url}") baseUrl: String
     ): RestClient {
         val httpClient = HttpClient.newBuilder()
@@ -23,7 +24,7 @@ class AnalyticsClientConfig {
             setReadTimeout(Duration.ofSeconds(1))
         }
 
-        return RestClient.builder()
+        return builder
             .baseUrl(baseUrl)
             .requestFactory(requestFactory)
             .build()
